@@ -4,7 +4,7 @@ import AVKit
 
 /// A view that displays an environment-dependent video.
 ///
-/// The video element on iOS is a wrapper of the AVPLayerViewController, while on macOS is a wrapper
+/// The video element on iOS is a wrapper of the AVPlayerViewController, while on macOS is a wrapper
 /// around AVPlayerView
 /// It can be configured to display controls, auto-loop or mute sound depending of the developer needs.
 ///
@@ -43,26 +43,26 @@ public struct Video {
 #if os(iOS)
 extension Video: UIViewControllerRepresentable {
     public func makeUIViewController(context: Context) -> AVPlayerViewController {
-        let videoView = AVPlayerViewController()
-        videoView.player = AVPlayer(url: videoURL)
+        let videoViewController = AVPlayerViewController()
+        videoViewController.player = AVPlayer(url: videoURL)
 
         let videoCoordinator = context.coordinator
         videoCoordinator.player = videoView.player
         videoCoordinator.url = videoURL
 
-        return videoView
+        return videoViewController
     }
 
-    public func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
+    public func updateUIViewController(_ videoViewController: AVPlayerViewController, context: Context) {
         if videoURL != context.coordinator.url {
-            uiViewController.player = AVPlayer(url: videoURL)
-            context.coordinator.player = uiViewController.player
+            videoViewController.player = AVPlayer(url: videoURL)
+            context.coordinator.player = videoViewController.player
             context.coordinator.url = videoURL
         }
-        uiViewController.showsPlaybackControls = showsPlaybackControls
-        uiViewController.allowsPictureInPicturePlayback = allowsPictureInPicturePlayback
-        uiViewController.player?.isMuted = isMuted.wrappedValue
-        uiViewController.videoGravity = videoGravity
+        videoViewController.showsPlaybackControls = showsPlaybackControls
+        videoViewController.allowsPictureInPicturePlayback = allowsPictureInPicturePlayback
+        videoViewController.player?.isMuted = isMuted.wrappedValue
+        videoViewController.videoGravity = videoGravity
         context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
         context.coordinator.loop = loop
     }
@@ -85,24 +85,24 @@ extension Video: NSViewRepresentable {
         return videoView
     }
 
-    public func updateNSView(_ nsview: AVPlayerView, context: Context) {
+    public func updateNSView(_ videoView: AVPlayerView, context: Context) {
         if videoURL != context.coordinator.url {
-            nsview.player = AVPlayer(url: videoURL)
-            context.coordinator.player = nsview.player
+            videoView.player = AVPlayer(url: videoURL)
+            context.coordinator.player = videoView.player
             context.coordinator.url = videoURL
         }
         if showsPlaybackControls {
-            nsview.controlsStyle = .inline
+            videoView.controlsStyle = .inline
         } else {
-            nsview.controlsStyle = .none
+            videoView.controlsStyle = .none
         }
         if #available(OSX 10.15, *) {
-            nsview.allowsPictureInPicturePlayback = allowsPictureInPicturePlayback
+            videoView.allowsPictureInPicturePlayback = allowsPictureInPicturePlayback
         } else {
             // Fallback on earlier versions
         }
-        nsview.player?.isMuted = isMuted.wrappedValue
-        nsview.videoGravity = videoGravity
+        videoView.player?.isMuted = isMuted.wrappedValue
+        videoView.videoGravity = videoGravity
         context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
         context.coordinator.loop = loop
     }
