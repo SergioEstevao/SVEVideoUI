@@ -42,12 +42,13 @@ public struct Video {
 
 #if os(iOS)
 extension Video: UIViewControllerRepresentable {
+    
     public func makeUIViewController(context: Context) -> AVPlayerViewController {
         let videoViewController = AVPlayerViewController()
         videoViewController.player = AVPlayer(url: videoURL)
 
         let videoCoordinator = context.coordinator
-        videoCoordinator.player = videoView.player
+        videoCoordinator.player = videoViewController.player
         videoCoordinator.url = videoURL
 
         return videoViewController
