@@ -198,9 +198,7 @@ extension Video {
     }
 
     public func isMuted(_ value: Bool) -> Video {
-        let new = self
-        new.isMuted.wrappedValue = value
-        return new
+        return isMuted(.constant(value))
     }
 
     public func isMuted(_ value: Binding<Bool>) -> Video {
