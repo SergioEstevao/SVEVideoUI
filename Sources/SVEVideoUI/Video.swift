@@ -117,23 +117,50 @@ extension Video {
     // MARK: - Coordinator
     public class VideoCoordinator: NSObject {
 
+        var playerContext = "playerContext"
+
         let video: Video
 
         var timeObserver: Any?
 
         var player: AVPlayer? {
             didSet {
+                removeTimeObserver(from: oldValue)
+                removeKVOObservers(from: oldValue)
+
+                addTimeObserver(to: player)
+                addKVOObservers(to: player)
+
                 NotificationCenter.default.addObserver(self,
                                                        selector:#selector(Video.VideoCoordinator.playerItemDidReachEnd),
                                                        name:.AVPlayerItemDidPlayToEndTime,
                                                        object:player?.currentItem)
 
-                timeObserver = player?.addPeriodicTimeObserver(forInterval: CMTimeMake(value: 1, timescale: 4), queue: nil, using: { [weak self](time) in
-                    self?.updateStatus()
-                })
+
             }
         }
 
+        private func addTimeObserver(to player: AVPlayer?) {
+            timeObserver = player?.addPeriodicTimeObserver(forInterval: CMTimeMake(value: 1, timescale: 4), queue: nil, using: { [weak self](time) in
+                self?.updateStatus()
+            })
+        }
+
+        private func removeTimeObserver(from player: AVPlayer?) {
+            if let timeObserver = timeObserver {
+                player?.removeTimeObserver(timeObserver)
+            }
+        }
+
+        private func removeKVOObservers(from player: AVPlayer?) {
+            player?.removeObserver(self, forKeyPath: "muted")
+        }
+
+        private func addKVOObservers(to player: AVPlayer?) {
+            player?.addObserver(self, forKeyPath: "muted",
+                                   options: [.new, .old],
+                                   context:&playerContext)
+        }
 
         var url: URL?
 
@@ -143,9 +170,8 @@ extension Video {
         }
 
         deinit {
-            if let observer = timeObserver {
-                player?.removeTimeObserver(observer)
-            }
+            removeTimeObserver(from: player)
+            removeKVOObservers(from: player)
         }
 
         @objc public func playerItemDidReachEnd(notification: NSNotification) {
@@ -160,10 +186,8 @@ extension Video {
         @objc public func updateStatus() {
             if let player = player {
                 video.isPlaying.wrappedValue = player.rate > 0
-                video.isMuted.wrappedValue = player.isMuted
             } else {
                 video.isPlaying.wrappedValue = false
-                video.isMuted.wrappedValue = false
             }
         }
 
@@ -176,6 +200,18 @@ extension Video {
                 player?.play()
             } else {
                 player?.pause()
+            }
+        }
+
+        override open func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+
+            // Only handle observations for the playerContext
+            guard context == &(playerContext), keyPath == "muted" else {
+                super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+                return
+            }
+            if let player = player {
+                video.isMuted.wrappedValue = player.isMuted
             }
         }
     }
