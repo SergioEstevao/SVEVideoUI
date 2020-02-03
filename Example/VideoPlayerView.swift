@@ -17,7 +17,7 @@ struct VideoPlayerView: View {
                     .isPlaying($isPlaying)
                     .isMuted($isMuted)
                     .playbackControls(showsControls)
-                    .loop(loop)
+                    .loop($loop)
                     .videoGravity(videoGravity)
                     .frame(width: nil, height: CGFloat(exactly:300), alignment: .center)
                 Group() {

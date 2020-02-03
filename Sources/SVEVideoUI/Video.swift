@@ -27,7 +27,7 @@ public struct Video {
     var videoGravity: AVLayerVideoGravity = .resizeAspect
 
     /// If true the video will loop itself when reaching the end of the video
-    var loop: Bool = false
+    var loop: Binding<Bool> = .constant(false)
 
     /// if true the video will play itself automattically
     var isPlaying: Binding<Bool>
@@ -64,8 +64,7 @@ extension Video: UIViewControllerRepresentable {
         videoViewController.allowsPictureInPicturePlayback = allowsPictureInPicturePlayback
         videoViewController.player?.isMuted = isMuted.wrappedValue
         videoViewController.videoGravity = videoGravity
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
-        context.coordinator.loop = loop
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)        
     }
 
     public func makeCoordinator() -> VideoCoordinator {
@@ -118,24 +117,50 @@ extension Video {
     // MARK: - Coordinator
     public class VideoCoordinator: NSObject {
 
+        var playerContext = "playerContext"
+
         let video: Video
 
         var timeObserver: Any?
 
         var player: AVPlayer? {
             didSet {
+                removeTimeObserver(from: oldValue)
+                removeKVOObservers(from: oldValue)
+
+                addTimeObserver(to: player)
+                addKVOObservers(to: player)
+
                 NotificationCenter.default.addObserver(self,
                                                        selector:#selector(Video.VideoCoordinator.playerItemDidReachEnd),
                                                        name:.AVPlayerItemDidPlayToEndTime,
                                                        object:player?.currentItem)
 
-                timeObserver = player?.addPeriodicTimeObserver(forInterval: CMTimeMake(value: 1, timescale: 4), queue: nil, using: { [weak self](time) in
-                    self?.updateStatus()
-                })
+
             }
         }
 
-        var loop: Bool = false
+        private func addTimeObserver(to player: AVPlayer?) {
+            timeObserver = player?.addPeriodicTimeObserver(forInterval: CMTimeMake(value: 1, timescale: 4), queue: nil, using: { [weak self](time) in
+                self?.updateStatus()
+            })
+        }
+
+        private func removeTimeObserver(from player: AVPlayer?) {
+            if let timeObserver = timeObserver {
+                player?.removeTimeObserver(timeObserver)
+            }
+        }
+
+        private func removeKVOObservers(from player: AVPlayer?) {
+            player?.removeObserver(self, forKeyPath: "muted")
+        }
+
+        private func addKVOObservers(to player: AVPlayer?) {
+            player?.addObserver(self, forKeyPath: "muted",
+                                   options: [.new, .old],
+                                   context:&playerContext)
+        }
 
         var url: URL?
 
@@ -145,13 +170,12 @@ extension Video {
         }
 
         deinit {
-            if let observer = timeObserver {
-                player?.removeTimeObserver(observer)
-            }
+            removeTimeObserver(from: player)
+            removeKVOObservers(from: player)
         }
 
         @objc public func playerItemDidReachEnd(notification: NSNotification) {
-            if loop {
+            if video.loop.wrappedValue {
                 player?.seek(to: .zero)
                 player?.play()
             } else {
@@ -162,10 +186,8 @@ extension Video {
         @objc public func updateStatus() {
             if let player = player {
                 video.isPlaying.wrappedValue = player.rate > 0
-                video.isMuted.wrappedValue = player.isMuted
             } else {
                 video.isPlaying.wrappedValue = false
-                video.isMuted.wrappedValue = false
             }
         }
 
@@ -178,6 +200,18 @@ extension Video {
                 player?.play()
             } else {
                 player?.pause()
+            }
+        }
+
+        override open func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+
+            // Only handle observations for the playerContext
+            guard context == &(playerContext), keyPath == "muted" else {
+                super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+                return
+            }
+            if let player = player {
+                video.isMuted.wrappedValue = player.isMuted
             }
         }
     }
@@ -198,9 +232,7 @@ extension Video {
     }
 
     public func isMuted(_ value: Bool) -> Video {
-        let new = self
-        new.isMuted.wrappedValue = value
-        return new
+        return isMuted(.constant(value))
     }
 
     public func isMuted(_ value: Binding<Bool>) -> Video {
@@ -228,6 +260,11 @@ extension Video {
     }
 
     public func loop(_ value: Bool) -> Video {
+        self.loop.wrappedValue = value
+        return self
+    }
+
+    public func loop(_ value: Binding<Bool>) -> Video {
         var new = self
         new.loop = value
         return new
