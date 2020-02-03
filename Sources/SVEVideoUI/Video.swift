@@ -27,7 +27,7 @@ public struct Video {
     var videoGravity: AVLayerVideoGravity = .resizeAspect
 
     /// If true the video will loop itself when reaching the end of the video
-    var loop: Bool = false
+    var loop: Binding<Bool> = .constant(false)
 
     /// if true the video will play itself automattically
     var isPlaying: Binding<Bool>
@@ -64,8 +64,7 @@ extension Video: UIViewControllerRepresentable {
         videoViewController.allowsPictureInPicturePlayback = allowsPictureInPicturePlayback
         videoViewController.player?.isMuted = isMuted.wrappedValue
         videoViewController.videoGravity = videoGravity
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
-        context.coordinator.loop = loop
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)        
     }
 
     public func makeCoordinator() -> VideoCoordinator {
@@ -135,7 +134,6 @@ extension Video {
             }
         }
 
-        var loop: Bool = false
 
         var url: URL?
 
@@ -151,7 +149,7 @@ extension Video {
         }
 
         @objc public func playerItemDidReachEnd(notification: NSNotification) {
-            if loop {
+            if video.loop.wrappedValue {
                 player?.seek(to: .zero)
                 player?.play()
             } else {
@@ -226,6 +224,11 @@ extension Video {
     }
 
     public func loop(_ value: Bool) -> Video {
+        self.loop.wrappedValue = value
+        return self
+    }
+
+    public func loop(_ value: Binding<Bool>) -> Video {
         var new = self
         new.loop = value
         return new
