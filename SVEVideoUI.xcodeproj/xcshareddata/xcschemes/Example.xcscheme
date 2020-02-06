@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1110"
+   LastUpgradeVersion = "1130"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "FF0B25AB237C7700004E255F"
+               BlueprintIdentifier = "FF26C61A237E260400289059"
                BuildableName = "Example.app"
                BlueprintName = "Example"
                ReferencedContainer = "container:SVEVideoUI.xcodeproj">
@@ -44,7 +44,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "FF0B25AB237C7700004E255F"
+            BlueprintIdentifier = "FF26C61A237E260400289059"
             BuildableName = "Example.app"
             BlueprintName = "Example"
             ReferencedContainer = "container:SVEVideoUI.xcodeproj">
@@ -61,7 +61,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "FF0B25AB237C7700004E255F"
+            BlueprintIdentifier = "FF26C61A237E260400289059"
             BuildableName = "Example.app"
             BlueprintName = "Example"
             ReferencedContainer = "container:SVEVideoUI.xcodeproj">

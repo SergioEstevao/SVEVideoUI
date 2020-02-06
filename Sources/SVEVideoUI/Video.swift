@@ -103,8 +103,7 @@ extension Video: NSViewRepresentable {
         }
         videoView.player?.isMuted = isMuted.wrappedValue
         videoView.videoGravity = videoGravity
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
-        context.coordinator.loop = loop
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)        
     }
 
     public func makeCoordinator() -> VideoCoordinator {
