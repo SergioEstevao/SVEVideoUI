@@ -102,6 +102,7 @@ extension Video: NSViewRepresentable {
             // Fallback on earlier versions
         }
         videoView.player?.isMuted = isMuted.wrappedValue
+        videoView.player?.volume = isMuted.wrappedValue ? 0 : 1
         videoView.videoGravity = videoGravity
         context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)        
     }
@@ -153,12 +154,17 @@ extension Video {
 
         private func removeKVOObservers(from player: AVPlayer?) {
             player?.removeObserver(self, forKeyPath: "muted")
+            player?.removeObserver(self, forKeyPath: "volume")
         }
 
         private func addKVOObservers(to player: AVPlayer?) {
             player?.addObserver(self, forKeyPath: "muted",
                                    options: [.new, .old],
                                    context:&playerContext)
+
+            player?.addObserver(self, forKeyPath: "volume",
+            options: [.new, .old],
+            context:&playerContext)
         }
 
         var url: URL?
@@ -205,12 +211,16 @@ extension Video {
         override open func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
 
             // Only handle observations for the playerContext
-            guard context == &(playerContext), keyPath == "muted" else {
+            guard context == &(playerContext), keyPath == "muted" || keyPath == "volume" else {
                 super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
                 return
             }
             if let player = player {
+                #if os(macOS)
+                video.isMuted.wrappedValue = player.volume == 0
+                #else
                 video.isMuted.wrappedValue = player.isMuted
+                #endif
             }
         }
     }
