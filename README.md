@@ -51,6 +51,7 @@ To run the example project, clone the repo, and open the `SVEVideoUI.xcproject` 
 ## Requirements
 
  * AVFoundation
+ * SwiftUI
  * XCode 11 or above
  * iOS 13 or above
  * macOS 10.15 or above
