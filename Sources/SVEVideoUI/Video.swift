@@ -55,6 +55,22 @@ public struct Video {
         backInSeconds = .constant(0.0)
         forwardInSeconds = .constant(0.0)
     }
+    
+    
+    /**
+     * this determines if we need to start the video at a specific seconds point in time.  It resets that value if it's not zero.
+     */
+    private func startAtSeconds() -> Double? {
+        var startAtSeconds:Double? = nil
+        if startVideoAtSeconds.wrappedValue != 0.0 {
+            startAtSeconds = startVideoAtSeconds.wrappedValue
+            DispatchQueue.main.async {
+                self.startVideoAtSeconds.wrappedValue = 0.0
+            }
+        }
+        
+        return startAtSeconds
+    }
 }
 
 #if os(iOS)
@@ -82,15 +98,7 @@ extension Video: UIViewControllerRepresentable {
         videoViewController.player?.isMuted = isMuted.wrappedValue
         videoViewController.videoGravity = videoGravity
         
-        var startSeconds:Double? = nil
-        if startVideoAtSeconds.wrappedValue != 0.0 {
-            startSeconds = startVideoAtSeconds.wrappedValue
-            DispatchQueue.main.async {
-                self.startVideoAtSeconds.wrappedValue = 0.0
-            }
-        }
-        
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startSeconds)
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startAtSeconds())
                 
         if backInSeconds.wrappedValue != 0.0 {
             context.coordinator.seekBackward(backInSeconds: backInSeconds.wrappedValue)
@@ -138,7 +146,7 @@ extension Video: NSViewRepresentable {
         videoView.player?.isMuted = isMuted.wrappedValue
         videoView.player?.volume = isMuted.wrappedValue ? 0 : 1
         videoView.videoGravity = videoGravity
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startAtSeconds())
     }
 
     public func makeCoordinator() -> VideoCoordinator {
