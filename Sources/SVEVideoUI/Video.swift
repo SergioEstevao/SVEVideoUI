@@ -71,6 +71,16 @@ public struct Video {
         
         return startAtSeconds
     }
+    
+    private func updateForSeek(context: Context) {
+        if backInSeconds.wrappedValue != 0.0 {
+            context.coordinator.seekBackward(backInSeconds: backInSeconds.wrappedValue)
+        }
+        
+        if forwardInSeconds.wrappedValue != 0.0 {
+            context.coordinator.seekForward(forwardInSeconds: forwardInSeconds.wrappedValue)
+        }
+    }
 }
 
 #if os(iOS)
@@ -86,7 +96,7 @@ extension Video: UIViewControllerRepresentable {
 
         return videoViewController
     }
-
+    
     public func updateUIViewController(_ videoViewController: AVPlayerViewController, context: Context) {
         if videoURL != context.coordinator.url {
             videoViewController.player = AVPlayer(url: videoURL)
@@ -99,14 +109,8 @@ extension Video: UIViewControllerRepresentable {
         videoViewController.videoGravity = videoGravity
         
         context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startAtSeconds())
-                
-        if backInSeconds.wrappedValue != 0.0 {
-            context.coordinator.seekBackward(backInSeconds: backInSeconds.wrappedValue)
-        }
-        
-        if forwardInSeconds.wrappedValue != 0.0 {
-            context.coordinator.seekForward(forwardInSeconds: forwardInSeconds.wrappedValue)
-        }
+
+        updateForSeek(context: context)
     }
 
     public func makeCoordinator() -> VideoCoordinator {
@@ -147,6 +151,8 @@ extension Video: NSViewRepresentable {
         videoView.player?.volume = isMuted.wrappedValue ? 0 : 1
         videoView.videoGravity = videoGravity
         context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startAtSeconds())
+        
+        updateForSeek(context: context)
     }
 
     public func makeCoordinator() -> VideoCoordinator {
