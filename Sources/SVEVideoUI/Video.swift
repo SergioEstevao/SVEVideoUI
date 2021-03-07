@@ -14,7 +14,7 @@ public struct Video {
     /// The URL of the video you want to display
     var videoURL: URL
 
-    /// Start the initial video at a specific time in seconds
+    /// Start the video at a specific time in seconds
     var startVideoAtSeconds: Binding<Double>
     
     /// If true the playback controler will be visible on the view
@@ -80,7 +80,6 @@ extension Video: UIViewControllerRepresentable {
         
         var startSeconds:Double? = nil
         if startVideoAtSeconds.wrappedValue != 0.0 {
-            print("!-- adjusting starting time in seconds")
             startSeconds = startVideoAtSeconds.wrappedValue
             DispatchQueue.main.async {
                 self.startVideoAtSeconds.wrappedValue = 0.0
@@ -88,9 +87,7 @@ extension Video: UIViewControllerRepresentable {
         }
         
         context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startSeconds)
-        
-//        print("!-- before coordinator back/forward")
-        
+                
         if backInSeconds.wrappedValue != 0.0 {
             context.coordinator.seekBackward(backInSeconds: backInSeconds.wrappedValue)
         }
@@ -234,20 +231,19 @@ extension Video {
                 if player?.currentItem?.duration == player?.currentTime() {
                     player?.seek(to: .zero)
                     player?.play()
-//                    return
+                    return
                 }
                 
-                startVideoAtSecondsIfNeeded(startVideoAtSeconds: startVideoAtSeconds)
-                print("before play 1")
+                seekOnStartToSecondsIfNeeded(startVideoAtSeconds: startVideoAtSeconds)
                 player?.play()
             } else {
                 player?.pause()
             }
         }
         
-        func startVideoAtSecondsIfNeeded(startVideoAtSeconds:Double?) {
+        func seekOnStartToSecondsIfNeeded(startVideoAtSeconds:Double?) {
             if let startVideoAtSeconds = startVideoAtSeconds {
-                print("seek with startVideoAtSeconds: \(startVideoAtSeconds)")
+//                print("seek with startVideoAtSeconds: \(startVideoAtSeconds)")
 
                 // 1000
                 let myTime = CMTime(seconds: startVideoAtSeconds, preferredTimescale: 1000)

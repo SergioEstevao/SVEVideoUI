@@ -61,8 +61,8 @@ struct VideoPlayerView: View {
                     
                     HStack {
                         Button(action: {
-                            print("Back 10s pressed")
-                            backInSeconds = 5.0
+                            print("Back pressed")
+                            backInSeconds = Constants.backAndForwardSeconds
                         }) {
                             Image(systemName: "gobackward.10")
                                 .resizable()
@@ -97,8 +97,8 @@ struct VideoPlayerView: View {
                         .frame(width: 50, height: 50)
                         
                         Button(action: {
-                            print("Forward 10s pressed")
-                            forwardInSeconds = 5.0
+                            print("Forward pressed")
+                            forwardInSeconds = Constants.backAndForwardSeconds
                         }) {
                             Image(systemName: "goforward.10")
                                 .resizable()
