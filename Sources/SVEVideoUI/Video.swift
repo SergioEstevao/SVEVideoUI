@@ -35,6 +35,9 @@ public struct Video {
     /// if true the video will play itself automattically
     var isPlaying: Binding<Bool>
     
+    /// allows sending back that last played seconds of the video for later playback at that location if needed
+    var lastPlayInSeconds: Binding<Double>
+    
     /// Set how many seconds you want to rewind the video
     var backInSeconds: Binding<Double>
     
@@ -48,6 +51,7 @@ public struct Video {
         isPlaying = playing
         isMuted = muted
         
+        lastPlayInSeconds = .constant(0.0)
         backInSeconds = .constant(0.0)
         forwardInSeconds = .constant(0.0)
     }
@@ -134,7 +138,7 @@ extension Video: NSViewRepresentable {
         videoView.player?.isMuted = isMuted.wrappedValue
         videoView.player?.volume = isMuted.wrappedValue ? 0 : 1
         videoView.videoGravity = videoGravity
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)        
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
     }
 
     public func makeCoordinator() -> VideoCoordinator {
@@ -221,6 +225,10 @@ extension Video {
         @objc public func updateStatus() {
             if let player = player {
                 video.isPlaying.wrappedValue = player.rate > 0
+                let playerCurrentTime = CMTimeGetSeconds(player.currentTime())
+                
+//                print("!-- updateStatus playerCurrentTime: \(playerCurrentTime)")
+                video.lastPlayInSeconds.wrappedValue = playerCurrentTime
             } else {
                 video.isPlaying.wrappedValue = false
             }
@@ -244,8 +252,6 @@ extension Video {
         func seekOnStartToSecondsIfNeeded(startVideoAtSeconds:Double?) {
             if let startVideoAtSeconds = startVideoAtSeconds {
 //                print("seek with startVideoAtSeconds: \(startVideoAtSeconds)")
-
-                // 1000
                 let myTime = CMTime(seconds: startVideoAtSeconds, preferredTimescale: 1000)
                 player?.seek(to: myTime, toleranceBefore: .zero, toleranceAfter: .zero)
             }
@@ -343,6 +349,12 @@ extension Video {
     public func isPlaying(_ value: Binding<Bool>) -> Video {
         var new = self
         new.isPlaying = value
+        return new
+    }
+    
+    public func lastPlayInSeconds(_ value: Binding<Double>) -> Video {
+        var new = self
+        new.lastPlayInSeconds = value
         return new
     }
     

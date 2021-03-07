@@ -21,6 +21,8 @@ struct VideoPlayerView: View {
     @State var backInSeconds:Double = 0.0
     @State var forwardInSeconds:Double = 0.0
     
+    @State var lastPlayInSeconds:Double = 0.0
+    
     var body: some View {
         ScrollView {
             VStack() {
@@ -35,6 +37,7 @@ struct VideoPlayerView: View {
                         .playbackControls(showsControls)
                         .loop($loop)
                         .videoGravity(videoGravity)
+                        .lastPlayInSeconds($lastPlayInSeconds)
                         .backInSeconds($backInSeconds)
                         .forwardInSeconds($forwardInSeconds)
                         .frame(width: nil, height: CGFloat(exactly:300), alignment: .center)
@@ -71,15 +74,14 @@ struct VideoPlayerView: View {
                         .frame(width: 50, height: 50)
                         
                         Button(action: {
-                            print("Play pressed")
-                            
                             if isPlaying {
+                                print("Pressed pause at: \(lastPlayInSeconds)")
                                 isPlaying = false
                             }
                             else {
+                                print("Pressed play")
                                 isPlaying = true
                             }
-                            
                         }) {
                             if isPlaying {
                                 Image(systemName: "pause")
@@ -107,7 +109,11 @@ struct VideoPlayerView: View {
                         .frame(width: 50, height: 50)
                         
                     }.padding(.top)
-                    
+
+//                    HStack {
+////                        Text(String(format: "%f", $lastPlayInSeconds))
+//
+//                    }
                 }.padding(.horizontal)
             }
         }
