@@ -5,7 +5,7 @@ import AVFoundation
 struct VideoPlayerView: View {
     
     struct Constants {
-        static let backAndForwardSeconds =  10.0
+        static let backAndForwardSeconds =  5.0
     }
     
     @State var videoURL = Bundle.main.url(forResource: "video", withExtension: "mp4")
@@ -16,7 +16,7 @@ struct VideoPlayerView: View {
     @State var isMuted = true
     @State var isPlaying = true
     
-    @State var startVideoSeconds:Double = 5.0
+    @State var startVideoSeconds:Double = 0.0
     
     @State var backInSeconds:Double = 0.0
     @State var forwardInSeconds:Double = 0.0
@@ -63,7 +63,7 @@ struct VideoPlayerView: View {
                             print("Back pressed")
                             backInSeconds = Constants.backAndForwardSeconds
                         }) {
-                            Image(systemName: "gobackward.10")
+                            Image(systemName: "gobackward.minus")
                                 .resizable()
                                 .frame(width: 30, height: 30)
                         }
@@ -98,7 +98,7 @@ struct VideoPlayerView: View {
                             print("Forward pressed")
                             forwardInSeconds = Constants.backAndForwardSeconds
                         }) {
-                            Image(systemName: "goforward.10")
+                            Image(systemName: "goforward.plus")
                                 .resizable()
                                 .frame(width: 30, height: 30)
                         }
