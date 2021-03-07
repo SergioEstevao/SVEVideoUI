@@ -15,7 +15,7 @@ public struct Video {
     var videoURL: URL
 
     /// Start the initial video at a specific time in seconds
-    var startVideoAtSeconds:Double
+    var startVideoAtSeconds: Binding<Double>
     
     /// If true the playback controler will be visible on the view
     var showsPlaybackControls: Bool = true
@@ -41,15 +41,15 @@ public struct Video {
     /// Set how many seconds you want to forward the video
     var forwardInSeconds: Binding<Double>
 
-    public init(url: URL, startVideoAtSeconds:Double = 0.0, playing: Binding<Bool> = .constant(true), muted: Binding<Bool> = .constant(false))
+    public init(url: URL, startVideoAtSeconds:Binding<Double> = .constant(0.0), playing: Binding<Bool> = .constant(true), muted: Binding<Bool> = .constant(false))
     {
         videoURL = url
         self.startVideoAtSeconds = startVideoAtSeconds
         isPlaying = playing
         isMuted = muted
         
-        backInSeconds = .constant(0.00)
-        forwardInSeconds = .constant(0.00)
+        backInSeconds = .constant(0.0)
+        forwardInSeconds = .constant(0.0)
     }
 }
 
@@ -77,7 +77,17 @@ extension Video: UIViewControllerRepresentable {
         videoViewController.allowsPictureInPicturePlayback = allowsPictureInPicturePlayback
         videoViewController.player?.isMuted = isMuted.wrappedValue
         videoViewController.videoGravity = videoGravity
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
+        
+        var startSeconds:Double? = nil
+        if startVideoAtSeconds.wrappedValue != 0.0 {
+            print("!-- adjusting starting time in seconds")
+            startSeconds = startVideoAtSeconds.wrappedValue
+            DispatchQueue.main.async {
+                self.startVideoAtSeconds.wrappedValue = 0.0
+            }
+        }
+        
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startSeconds)
         
 //        print("!-- before coordinator back/forward")
         
@@ -205,10 +215,6 @@ extension Video {
         @objc public func playerItemDidReachEnd(notification: NSNotification) {
             if video.loop.wrappedValue {
                 player?.seek(to: .zero)
-                
-//                let myTime = CMTime(seconds: 0, preferredTimescale: 60000)
-//                player?.seek(to: myTime, toleranceBefore: .zero, toleranceAfter: .zero)
-                
                 player?.play()
             } else {
                 video.isPlaying.wrappedValue = false
@@ -221,12 +227,9 @@ extension Video {
             } else {
                 video.isPlaying.wrappedValue = false
             }
-            
-//            let currentTime = player?.currentTime()
-//            print("!-- updateStatus currentTime: \(currentTime)")
         }
 
-        func togglePlay(isPlaying: Bool) {
+        func togglePlay(isPlaying: Bool, startVideoAtSeconds:Double?) {
             if isPlaying {
                 if player?.currentItem?.duration == player?.currentTime() {
                     player?.seek(to: .zero)
@@ -234,30 +237,22 @@ extension Video {
 //                    return
                 }
                 
-//                let myTime = CMTime(seconds: 0, preferredTimescale: 60000)
-//                player?.seek(to: myTime, toleranceBefore: .zero, toleranceAfter: .zero)
-            
+                startVideoAtSecondsIfNeeded(startVideoAtSeconds: startVideoAtSeconds)
+                print("before play 1")
                 player?.play()
             } else {
                 player?.pause()
             }
-            
-            // NEW
-//            if isPlaying {
-//                if player?.currentItem?.duration == player?.currentTime() {
-//                    player?.seek(to: .zero)
-//                    player?.play()
-//                }
-//
-//                let myTime = CMTime(seconds: video.startVideoAtSeconds, preferredTimescale: 60000)
-//                player?.seek(to: myTime, toleranceBefore: .zero, toleranceAfter: .zero)
-//                player?.play()
-//            } else {
-//                player?.pause()
-//
-//                let currentTime = player?.currentTime()
-//                print("!-- togglePlay currentTime: \(currentTime)")
-//            }
+        }
+        
+        func startVideoAtSecondsIfNeeded(startVideoAtSeconds:Double?) {
+            if let startVideoAtSeconds = startVideoAtSeconds {
+                print("seek with startVideoAtSeconds: \(startVideoAtSeconds)")
+
+                // 1000
+                let myTime = CMTime(seconds: startVideoAtSeconds, preferredTimescale: 1000)
+                player?.seek(to: myTime, toleranceBefore: .zero, toleranceAfter: .zero)
+            }
         }
         
         func seekForward(forwardInSeconds: Double) {

@@ -6,9 +6,6 @@ struct VideoPlayerView: View {
     
     struct Constants {
         static let backAndForwardSeconds =  10.0
-        
-        static let startVideoSeconds = 0.0
-//        static let startVideoSeconds = 5.0
     }
     
     @State var videoURL = Bundle.main.url(forResource: "video", withExtension: "mp4")
@@ -18,6 +15,8 @@ struct VideoPlayerView: View {
     @State var loop = false
     @State var isMuted = true
     @State var isPlaying = true
+    
+    @State var startVideoSeconds:Double = 5.0
     
     @State var backInSeconds:Double = 0.0
     @State var forwardInSeconds:Double = 0.0
@@ -30,7 +29,7 @@ struct VideoPlayerView: View {
                 
                 if let videoURL = videoURL2 {
                                         
-                    Video(url: videoURL, startVideoAtSeconds: Constants.startVideoSeconds)
+                    Video(url: videoURL, startVideoAtSeconds: $startVideoSeconds)
                         .isPlaying($isPlaying)
                         .isMuted($isMuted)
                         .playbackControls(showsControls)
