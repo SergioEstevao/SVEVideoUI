@@ -26,11 +26,7 @@ struct VideoPlayerView: View {
     var body: some View {
         ScrollView {
             VStack() {
-                
-                let videoURL2 = URL(string: "http://nickernet-mbp1.local:3000/static/thingsAbove/6C7FDFED-59C9-4838-9D93-4B2B2D42BE21/session_1_.mp4")
-                
-                if let videoURL = videoURL2 {
-                                        
+                if let videoURL = videoURL {
                     Video(url: videoURL, startVideoAtSeconds: $startVideoSeconds)
                         .isPlaying($isPlaying)
                         .isMuted($isMuted)
