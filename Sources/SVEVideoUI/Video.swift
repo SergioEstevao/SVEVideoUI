@@ -79,8 +79,15 @@ extension Video: UIViewControllerRepresentable {
         videoViewController.videoGravity = videoGravity
         context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)
         
-        context.coordinator.seekBackward(backInSeconds: backInSeconds.wrappedValue)
-//        context.coordinator.seekForward(forwardInSeconds: forwardInSeconds.wrappedValue)
+//        print("!-- before coordinator back/forward")
+        
+        if backInSeconds.wrappedValue != 0.0 {
+            context.coordinator.seekBackward(backInSeconds: backInSeconds.wrappedValue)
+        }
+        
+        if forwardInSeconds.wrappedValue != 0.0 {
+            context.coordinator.seekForward(forwardInSeconds: forwardInSeconds.wrappedValue)
+        }
     }
 
     public func makeCoordinator() -> VideoCoordinator {
