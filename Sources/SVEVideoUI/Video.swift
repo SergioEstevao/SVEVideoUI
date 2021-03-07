@@ -269,13 +269,7 @@ extension Video {
             let newTime = playerCurrentTime + forwardInSeconds
 
             if newTime < (CMTimeGetSeconds(duration) - forwardInSeconds) {
-                
-                let timescale:Int32 = 1000
-                
-//                let timescale1 = player.currentTime().timescale
-                print("forwards timescale1: \(timescale)")
-
-                let time2: CMTime = CMTimeMake(value: Int64(newTime * 1000 as Float64), timescale: timescale)
+                let time2: CMTime = CMTimeMake(value: Int64(newTime * 1000 as Float64), timescale: 1000)
                 player.seek(to: time2, toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero)
             }
             
@@ -289,8 +283,6 @@ extension Video {
             guard let player = self.player,
                   backInSeconds != .zero else { return }
             
-            print("!-- seekBackward seek executed")
-            
             let playerCurrentTime = CMTimeGetSeconds(player.currentTime())
             var newTime = playerCurrentTime - backInSeconds
             
@@ -298,13 +290,7 @@ extension Video {
                 newTime = 0
             }
             
-            
-            
-            let timescale:Int32 = 1000
-            let timescale1 = player.currentTime().timescale
-            print("backwards timescale1: \(timescale1)")
-            
-            let time2: CMTime = CMTimeMake(value: Int64(newTime * 1000 as Float64), timescale: timescale)
+            let time2: CMTime = CMTimeMake(value: Int64(newTime * 1000 as Float64), timescale: 1000)
             player.seek(to: time2, toleranceBefore: .zero, toleranceAfter: .zero)
 
             DispatchQueue.main.async {
