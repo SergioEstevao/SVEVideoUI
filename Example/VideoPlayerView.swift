@@ -105,11 +105,6 @@ struct VideoPlayerView: View {
                         .frame(width: 50, height: 50)
                         
                     }.padding(.top)
-
-//                    HStack {
-////                        Text(String(format: "%f", $lastPlayInSeconds))
-//
-//                    }
                 }.padding(.horizontal)
             }
         }

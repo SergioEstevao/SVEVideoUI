@@ -240,8 +240,6 @@ extension Video {
             if let player = player {
                 video.isPlaying.wrappedValue = player.rate > 0
                 let playerCurrentTime = CMTimeGetSeconds(player.currentTime())
-                
-//                print("!-- updateStatus playerCurrentTime: \(playerCurrentTime)")
                 video.lastPlayInSeconds.wrappedValue = playerCurrentTime
             } else {
                 video.isPlaying.wrappedValue = false
@@ -265,7 +263,6 @@ extension Video {
         
         func seekOnStartToSecondsIfNeeded(startVideoAtSeconds:Double?) {
             if let startVideoAtSeconds = startVideoAtSeconds {
-//                print("seek with startVideoAtSeconds: \(startVideoAtSeconds)")
                 let myTime = CMTime(seconds: startVideoAtSeconds, preferredTimescale: 1000)
                 player?.seek(to: myTime, toleranceBefore: .zero, toleranceAfter: .zero)
             }
