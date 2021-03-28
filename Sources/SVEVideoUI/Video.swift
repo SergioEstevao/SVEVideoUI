@@ -65,7 +65,9 @@ public struct Video {
         if startVideoAtSeconds.wrappedValue != 0.0 {
             startAtSeconds = startVideoAtSeconds.wrappedValue
             DispatchQueue.main.async {
-                self.startVideoAtSeconds.wrappedValue = 0.0
+                if let startAtSeconds = startAtSeconds {
+                    self.startVideoAtSeconds.wrappedValue = startAtSeconds
+                }
             }
         }
         
@@ -232,6 +234,7 @@ extension Video {
                 player?.seek(to: .zero)
                 player?.play()
             } else {
+                video.startVideoAtSeconds.wrappedValue = 0.0
                 video.isPlaying.wrappedValue = false
             }
         }
@@ -257,6 +260,7 @@ extension Video {
                 seekOnStartToSecondsIfNeeded(startVideoAtSeconds: startVideoAtSeconds)
                 player?.play()
             } else {
+                seekOnStartToSecondsIfNeeded(startVideoAtSeconds: startVideoAtSeconds)
                 player?.pause()
             }
         }
