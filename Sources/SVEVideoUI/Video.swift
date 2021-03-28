@@ -269,6 +269,11 @@ extension Video {
             if let startVideoAtSeconds = startVideoAtSeconds {
                 let myTime = CMTime(seconds: startVideoAtSeconds, preferredTimescale: 1000)
                 player?.seek(to: myTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                
+                DispatchQueue.main.async {
+                    // reset it back to zero since we just seeked
+                    self.video.startVideoAtSeconds.wrappedValue = 0.0
+                }
             }
         }
         
