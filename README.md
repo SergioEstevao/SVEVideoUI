@@ -3,7 +3,7 @@
 
 SVEVideoUI provides SwiftUI view that diplays videos.
 
-![Screenshot](screenshots_1.jpg "Screenshot")
+![Screenshot](screenshots_1.png "Screenshot")
 
 ## Installation
 
@@ -11,7 +11,7 @@ SVEVideoUI is available through [Swift Package Manager](https://swift.org/packag
 it, simply add the following line to your `Package.swit`:
 ```
 dependencies: [
-.package(url: "https://github.com/SergioEstevao/SVEVideoUI.git", from: "0.2.0")
+.package(url: "https://github.com/SergioEstevao/SVEVideoUI.git", from: "0.4.0")
 ]
 ```
 ## Usage
@@ -27,6 +27,12 @@ struct VideoPlayerView: View {
             Video(url: videoURL)                            
     }
 }
+````
+
+
+If you want to start the video at specific seconds
+```` swift
+Video(url: videoURL, startVideoAtSeconds: 15.5)
 ````
 
 If you want to mute the sound on the video you just need to do

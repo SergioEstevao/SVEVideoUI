@@ -14,6 +14,9 @@ public struct Video {
     /// The URL of the video you want to display
     var videoURL: URL
 
+    /// Start the video at a specific time in seconds
+    var startVideoAtSeconds: Binding<Double>
+    
     /// If true the playback controler will be visible on the view
     var showsPlaybackControls: Bool = true
 
@@ -31,12 +34,54 @@ public struct Video {
 
     /// if true the video will play itself automattically
     var isPlaying: Binding<Bool>
+    
+    /// allows sending back that last played seconds of the video for later playback at that location if needed
+    var lastPlayInSeconds: Binding<Double>
+    
+    /// Set how many seconds you want to rewind the video
+    var backInSeconds: Binding<Double>
+    
+    /// Set how many seconds you want to forward the video
+    var forwardInSeconds: Binding<Double>
 
-    public init(url: URL, playing: Binding<Bool> = .constant(true), muted: Binding<Bool> = .constant(false))
+    public init(url: URL, startVideoAtSeconds:Binding<Double> = .constant(0.0), playing: Binding<Bool> = .constant(true), muted: Binding<Bool> = .constant(false))
     {
         videoURL = url
+        self.startVideoAtSeconds = startVideoAtSeconds
         isPlaying = playing
         isMuted = muted
+        
+        lastPlayInSeconds = .constant(0.0)
+        backInSeconds = .constant(0.0)
+        forwardInSeconds = .constant(0.0)
+    }
+    
+    
+    /**
+     * this determines if we need to start the video at a specific seconds point in time.  It resets that value if it's not zero.
+     */
+    private func startAtSeconds() -> Double? {
+        var startAtSeconds:Double? = nil
+        if startVideoAtSeconds.wrappedValue != 0.0 {
+            startAtSeconds = startVideoAtSeconds.wrappedValue
+            DispatchQueue.main.async {
+                if let startAtSeconds = startAtSeconds {
+                    self.startVideoAtSeconds.wrappedValue = startAtSeconds
+                }
+            }
+        }
+        
+        return startAtSeconds
+    }
+    
+    private func updateForSeek(context: Context) {
+        if backInSeconds.wrappedValue != 0.0 {
+            context.coordinator.seekBackward(backInSeconds: backInSeconds.wrappedValue)
+        }
+        
+        if forwardInSeconds.wrappedValue != 0.0 {
+            context.coordinator.seekForward(forwardInSeconds: forwardInSeconds.wrappedValue)
+        }
     }
 }
 
@@ -53,7 +98,7 @@ extension Video: UIViewControllerRepresentable {
 
         return videoViewController
     }
-
+    
     public func updateUIViewController(_ videoViewController: AVPlayerViewController, context: Context) {
         if videoURL != context.coordinator.url {
             videoViewController.player = AVPlayer(url: videoURL)
@@ -64,7 +109,10 @@ extension Video: UIViewControllerRepresentable {
         videoViewController.allowsPictureInPicturePlayback = allowsPictureInPicturePlayback
         videoViewController.player?.isMuted = isMuted.wrappedValue
         videoViewController.videoGravity = videoGravity
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)        
+        
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startAtSeconds())
+
+        updateForSeek(context: context)
     }
 
     public func makeCoordinator() -> VideoCoordinator {
@@ -104,7 +152,9 @@ extension Video: NSViewRepresentable {
         videoView.player?.isMuted = isMuted.wrappedValue
         videoView.player?.volume = isMuted.wrappedValue ? 0 : 1
         videoView.videoGravity = videoGravity
-        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue)        
+        context.coordinator.togglePlay(isPlaying: isPlaying.wrappedValue, startVideoAtSeconds: startAtSeconds())
+        
+        updateForSeek(context: context)
     }
 
     public func makeCoordinator() -> VideoCoordinator {
@@ -184,6 +234,7 @@ extension Video {
                 player?.seek(to: .zero)
                 player?.play()
             } else {
+                video.startVideoAtSeconds.wrappedValue = 0.0
                 video.isPlaying.wrappedValue = false
             }
         }
@@ -191,20 +242,77 @@ extension Video {
         @objc public func updateStatus() {
             if let player = player {
                 video.isPlaying.wrappedValue = player.rate > 0
+                let playerCurrentTime = CMTimeGetSeconds(player.currentTime())
+                video.lastPlayInSeconds.wrappedValue = playerCurrentTime
             } else {
                 video.isPlaying.wrappedValue = false
             }
         }
 
-        func togglePlay(isPlaying: Bool) {
+        func togglePlay(isPlaying: Bool, startVideoAtSeconds:Double?) {
             if isPlaying {
                 if player?.currentItem?.duration == player?.currentTime() {
                     player?.seek(to: .zero)
                     player?.play()
+                    return
                 }
+                
+                seekOnStartToSecondsIfNeeded(startVideoAtSeconds: startVideoAtSeconds)
                 player?.play()
             } else {
+                seekOnStartToSecondsIfNeeded(startVideoAtSeconds: startVideoAtSeconds)
                 player?.pause()
+            }
+        }
+        
+        func seekOnStartToSecondsIfNeeded(startVideoAtSeconds:Double?) {
+            if let startVideoAtSeconds = startVideoAtSeconds {
+                let myTime = CMTime(seconds: startVideoAtSeconds, preferredTimescale: 1000)
+                player?.seek(to: myTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                
+                DispatchQueue.main.async {
+                    // reset it back to zero since we just seeked
+                    self.video.startVideoAtSeconds.wrappedValue = 0.0
+                }
+            }
+        }
+        
+        func seekForward(forwardInSeconds: Double) {
+            guard let player = self.player,
+                  let duration  = player.currentItem?.duration else {
+                return
+            }
+            let playerCurrentTime = CMTimeGetSeconds(player.currentTime())
+            let newTime = playerCurrentTime + forwardInSeconds
+
+            if newTime < (CMTimeGetSeconds(duration) - forwardInSeconds) {
+                let time2: CMTime = CMTimeMake(value: Int64(newTime * 1000 as Float64), timescale: 1000)
+                player.seek(to: time2, toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero)
+            }
+            
+            DispatchQueue.main.async {
+                // resets the value to be tapped again.
+                self.video.forwardInSeconds.wrappedValue = 0.0
+            }
+        }
+                
+        func seekBackward(backInSeconds: Double) {
+            guard let player = self.player,
+                  backInSeconds != .zero else { return }
+            
+            let playerCurrentTime = CMTimeGetSeconds(player.currentTime())
+            var newTime = playerCurrentTime - backInSeconds
+            
+            if newTime < 0 {
+                newTime = 0
+            }
+            
+            let time2: CMTime = CMTimeMake(value: Int64(newTime * 1000 as Float64), timescale: 1000)
+            player.seek(to: time2, toleranceBefore: .zero, toleranceAfter: .zero)
+
+            DispatchQueue.main.async {
+                // resets the value to be tapped again.
+                self.video.backInSeconds.wrappedValue = 0.0
             }
         }
 
@@ -219,7 +327,9 @@ extension Video {
                 #if os(macOS)
                 video.isMuted.wrappedValue = player.volume == 0
                 #else
-                video.isMuted.wrappedValue = player.isMuted
+                DispatchQueue.main.async {
+                    self.video.isMuted.wrappedValue = player.isMuted
+                }
                 #endif
             }
         }
@@ -259,6 +369,24 @@ extension Video {
     public func isPlaying(_ value: Binding<Bool>) -> Video {
         var new = self
         new.isPlaying = value
+        return new
+    }
+    
+    public func lastPlayInSeconds(_ value: Binding<Double>) -> Video {
+        var new = self
+        new.lastPlayInSeconds = value
+        return new
+    }
+    
+    public func backInSeconds(_ value: Binding<Double>) -> Video {
+        var new = self
+        new.backInSeconds = value
+        return new
+    }
+    
+    public func forwardInSeconds(_ value: Binding<Double>) -> Video {
+        var new = self
+        new.forwardInSeconds = value
         return new
     }
 
